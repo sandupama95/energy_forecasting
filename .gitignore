@@ -15,8 +15,6 @@ venv/
 logs/
 
 # Data and models (you may want to add raw data, or store links instead)
-data/DS_ElectricityLoad.csv
-models/
 
 
 # MLflow local files
