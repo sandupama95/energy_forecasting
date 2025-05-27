@@ -1,0 +1,26 @@
+# Byte‐compiled / caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+.venv/
+env/
+venv/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Logs
+logs/
+
+# Data and models (you may want to add raw data, or store links instead)
+data/DS_ElectricityLoad.csv
+models/
+plots/
+
+# MLflow local files
+mlruns/
+
+# OS files
+.DS_Store
