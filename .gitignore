@@ -17,7 +17,7 @@ logs/
 # Data and models (you may want to add raw data, or store links instead)
 data/DS_ElectricityLoad.csv
 models/
-plots/
+
 
 # MLflow local files
 mlruns/
