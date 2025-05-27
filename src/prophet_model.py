@@ -4,7 +4,7 @@ import pandas as pd
 from prophet import Prophet
 from src.evaluate import evaluate_forecast
 
-def train_and_predict_prophet(df: pd.DataFrame, forecast_horizon: int = 48):
+def train_and_predict_prophet(df: pd.DataFrame, forecast_horizon: int = 48, return_model: bool = False):
     """
     1. Prepares df with columns 'ds' (Date) and 'y' (Load).
     2. Splits off last 'forecast_horizon' rows for validation.
@@ -35,4 +35,8 @@ def train_and_predict_prophet(df: pd.DataFrame, forecast_horizon: int = 48):
     y_true = test["y"].values
 
     metrics = evaluate_forecast(y_true, y_pred)
-    return y_pred, y_true, metrics
+    if return_model:
+        # Return the trained Prophet object as well
+        return y_pred, y_true, metrics, model
+    else:
+        return y_pred, y_true, metrics

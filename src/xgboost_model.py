@@ -4,7 +4,7 @@ import pandas as pd
 import xgboost as xgb
 from src.evaluate import evaluate_forecast
 
-def train_and_predict_xgboost(df: pd.DataFrame, forecast_horizon: int = 48):
+def train_and_predict_xgboost(df: pd.DataFrame, forecast_horizon: int = 48, return_model: bool = False):
     """
     1. Uses all engineered features (except Date and Load).
     2. Splits off last 'forecast_horizon' rows for validation.
@@ -40,4 +40,7 @@ def train_and_predict_xgboost(df: pd.DataFrame, forecast_horizon: int = 48):
     y_true = y_test.values
 
     metrics = evaluate_forecast(y_true, y_pred)
-    return y_pred, y_true, metrics
+    if return_model:
+        return y_pred, y_true, metrics, model
+    else:
+        return y_pred, y_true, metrics

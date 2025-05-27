@@ -25,7 +25,7 @@ def create_sequences(series, n_steps):
     X = X.reshape((X.shape[0], X.shape[1], 1))
     return X, y
 
-def train_and_predict_lstm(df: pd.DataFrame, forecast_horizon: int = 48, lookback: int = 24):
+def train_and_predict_lstm(df: pd.DataFrame, forecast_horizon: int = 48, lookback: int = 24, return_model: bool = False):
     """
     1. Uses only the 'Load' column.
     2. Scales to [0,1] via MinMaxScaler.
@@ -62,4 +62,7 @@ def train_and_predict_lstm(df: pd.DataFrame, forecast_horizon: int = 48, lookbac
     y_true = scaler.inverse_transform(y_test.reshape(-1, 1)).flatten()
 
     metrics = evaluate_forecast(y_true, y_pred)
-    return y_pred, y_true, metrics
+    if return_model:
+        return y_pred, y_true, metrics, model
+    else:
+        return y_pred, y_true, metrics
