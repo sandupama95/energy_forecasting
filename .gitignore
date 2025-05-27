@@ -21,6 +21,7 @@ models/
 
 # MLflow local files
 mlruns/
+mlartifacts/0
 
 # OS files
 .DS_Store
