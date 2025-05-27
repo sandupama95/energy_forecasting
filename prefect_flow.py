@@ -190,55 +190,58 @@ def energy_forecasting_flow(config_path: str = "configs/config.yaml"):
     7. Clean anomalies (drop/impute, log to MLflow)
     8. Train & evaluate models (log metrics + plots)
     """
-    # 1. Load config and init logger
-    config = load_config(config_path)
-    logger = init_logger(config["log_path"])
+    try:
+        # 1. Load config and init logger
+        config = load_config(config_path)
+        logger = init_logger(config["log_path"])
 
-    # 2. Parent MLflow run
-    with mlflow.start_run(run_name="energy_forecasting_pipeline") as parent_run:
-        # Log pipeline parameters
-        mlflow.log_params({
-            "forecast_horizon": config["forecast_horizon"],
-            "resid_thresh": config["anomaly"]["resid_thresh"],
-            "contamination": config["anomaly"]["contamination"],
-            "drop_anomalies": config["anomaly"]["drop_anomalies"],
-            "models": ",".join(config["models"])
-        })
+        # 2. Parent MLflow run
+        with mlflow.start_run(run_name="energy_forecasting_pipeline") as parent_run:
+            # Log pipeline parameters
+            mlflow.log_params({
+                "forecast_horizon": config["forecast_horizon"],
+                "resid_thresh": config["anomaly"]["resid_thresh"],
+                "contamination": config["anomaly"]["contamination"],
+                "drop_anomalies": config["anomaly"]["drop_anomalies"],
+                "models": ",".join(config["models"])
+            })
 
-        # 3. Load raw data
-        logger.info("Loading raw data...")
-        df_raw = load_raw_data(config["data_path"])
+            # 3. Load raw data
+            logger.info("Loading raw data...")
+            df_raw = load_raw_data(config["data_path"])
 
-        # 4. Data quality checks
-        df_q = data_quality_checks(df_raw)
+            # 4. Data quality checks
+            df_q = data_quality_checks(df_raw)
 
-        # 5. Feature engineering
-        logger.info("Engineering features...")
-        df_feat = engineer_features(df_q)
+            # 5. Feature engineering
+            logger.info("Engineering features...")
+            df_feat = engineer_features(df_q)
 
-        # 6. Anomaly detection
-        logger.info("Running anomaly detection...")
-        df_anom = run_anomaly_detection(
-            df_feat,
-            resid_thresh=config["anomaly"]["resid_thresh"],
-            contamination=config["anomaly"]["contamination"]
-        )
+            # 6. Anomaly detection
+            logger.info("Running anomaly detection...")
+            df_anom = run_anomaly_detection(
+                df_feat,
+                resid_thresh=config["anomaly"]["resid_thresh"],
+                contamination=config["anomaly"]["contamination"]
+            )
 
-        # 7. Clean anomalies
-        logger.info("Cleaning anomalies before training...")
-        df_clean = clean_anomalies(df_anom, drop=config["anomaly"]["drop_anomalies"])
+            # 7. Clean anomalies
+            logger.info("Cleaning anomalies before training...")
+            df_clean = clean_anomalies(df_anom, drop=config["anomaly"]["drop_anomalies"])
 
-        # 8. Train & evaluate models
-        logger.info("Training and evaluating models...")
-        train_and_evaluate(
-            df_clean,
-            forecast_horizon=config["forecast_horizon"],
-            chosen_models=config["models"]
-        )
+            # 8. Train & evaluate models
+            logger.info("Training and evaluating models...")
+            train_and_evaluate(
+                df_clean,
+                forecast_horizon=config["forecast_horizon"],
+                chosen_models=config["models"]
+            )
 
-        logger.info("Pipeline run complete. Check MLflow UI for metrics & artifacts.")
+            logger.info("Pipeline run complete. Check MLflow UI for metrics & artifacts.")
+    except Exception as e:
+        logger.error(f"Flow failed due to error: {e}")
+        raise
 
 
 if __name__ == "__main__":
-    # This ensures that when you run `python prefect_flow.py`, the flow actually executes.
     energy_forecasting_flow()
