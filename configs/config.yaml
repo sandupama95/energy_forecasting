@@ -1,0 +1,15 @@
+# configs/config.yaml
+
+data_path: "data/DS_ElectricityLoad.csv"
+log_path: "logs/prefect.log"
+forecast_horizon: 48
+
+anomaly:
+  resid_thresh: 3.0
+  contamination: 0.01
+  drop_anomalies: true
+
+models:
+  - prophet
+  - xgboost
+  - lstm
