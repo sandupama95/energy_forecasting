@@ -16,7 +16,11 @@ def train_and_predict_xgboost(df: pd.DataFrame, forecast_horizon: int = 48, retu
     # Drop any remaining NaNs
     df = df.dropna().reset_index(drop=True)
 
-    feature_cols = [c for c in df.columns if c not in ["Date", "Load"]]
+    # feature_cols = [c for c in df.columns if c not in ["Date", "Load"]]
+    feature_cols = [
+    col for col in df.columns
+    if col not in ["Date", "Load"] and df[col].dtype not in ["object"]
+       ]
     X = df[feature_cols]
     y = df["Load"]
 
@@ -40,6 +44,13 @@ def train_and_predict_xgboost(df: pd.DataFrame, forecast_horizon: int = 48, retu
     y_true = y_test.values
 
     metrics = evaluate_forecast(y_true, y_pred)
+    # Save predictions
+    forecast_df = pd.DataFrame({
+        "timestamp": df["Date"].iloc[-forecast_horizon:],
+        "true_load": y_true,
+        "predicted_load": y_pred
+    })
+    forecast_df.to_csv("data/predictions/xgboost_predictions.csv", index=False)
     if return_model:
         return y_pred, y_true, metrics, model
     else:

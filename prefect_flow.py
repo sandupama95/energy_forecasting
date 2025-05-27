@@ -4,6 +4,7 @@ import os
 import mlflow
 from prefect import flow, task, get_run_logger
 import pandas as pd
+import pickle
 
 from src.utils import load_config, init_logger
 from src.data_loader import load_raw_data
@@ -19,7 +20,8 @@ from src.xgboost_model import train_and_predict_xgboost
 from src.lstm_model import train_and_predict_lstm
 
 # Set MLflow tracking URI (you can customize or set via env var)
-mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlruns.db"))
+# mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlruns.db"))
+mlflow.set_tracking_uri("http://localhost:5001")
 
 @task
 def data_quality_checks(df: pd.DataFrame):
@@ -113,6 +115,7 @@ def train_and_evaluate(df: pd.DataFrame, forecast_horizon: int, chosen_models: l
     Uses last `forecast_horizon` hours as validation.
     """
     logger = get_run_logger()
+    os.makedirs("data/predictions", exist_ok=True)
     df = df.copy().dropna().reset_index(drop=True)
     # 1. Prophet
     if "prophet" in chosen_models:
@@ -134,8 +137,16 @@ def train_and_evaluate(df: pd.DataFrame, forecast_horizon: int, chosen_models: l
             mlflow.log_artifact("prophet_forecast_vs_actual.png", artifact_path="plots")
             os.remove("prophet_forecast_vs_actual.png")
             logger.info(f"Prophet metrics: {metrics}")
-            mlflow.log_artifact(model_prophet, artifact_path="models/prophet")
-            logger.info("Prophet model artifact logged to MLflow.")
+
+                        
+            # Save the Prophet model object to disk first
+            prophet_path = "models/prophet_model.pkl"
+            with open(prophet_path, "wb") as f:
+                pickle.dump(model_prophet, f)
+
+            # Then log the file path to MLflow
+            mlflow.log_artifact(prophet_path, artifact_path="models/prophet")
+
 
     # 2. XGBoost
     if "xgboost" in chosen_models:
@@ -226,3 +237,8 @@ def energy_forecasting_flow(config_path: str = "configs/config.yaml"):
         )
 
         logger.info("Pipeline run complete. Check MLflow UI for metrics & artifacts.")
+
+
+if __name__ == "__main__":
+    # This ensures that when you run `python prefect_flow.py`, the flow actually executes.
+    energy_forecasting_flow()

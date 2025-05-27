@@ -49,19 +49,26 @@ def train_and_predict_lstm(df: pd.DataFrame, forecast_horizon: int = 48, lookbac
 
     # Build LSTM model
     model = Sequential([
-        LSTM(64, activation="relu", input_shape=(lookback, 1)),
+        LSTM(50, activation="relu", input_shape=(lookback, 1)),
         Dense(1)
     ])
     model.compile(optimizer="adam", loss="mse")
     es = EarlyStopping(monitor="loss", patience=5, restore_best_weights=True)
 
-    model.fit(X_train, y_train, epochs=50, batch_size=32, verbose=0, callbacks=[es])
+    model.fit(X_train, y_train, epochs=10, batch_size=32, verbose=0, callbacks=[es])
 
     y_pred_scaled = model.predict(X_test).flatten()
     y_pred = scaler.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()
     y_true = scaler.inverse_transform(y_test.reshape(-1, 1)).flatten()
 
     metrics = evaluate_forecast(y_true, y_pred)
+    # Save predictions
+    forecast_df = pd.DataFrame({
+        "timestamp": df["Date"].iloc[-forecast_horizon:],
+        "true_load": y_true,
+        "predicted_load": y_pred
+    })
+    forecast_df.to_csv("data/predictions/lstm_predictions.csv", index=False)
     if return_model:
         return y_pred, y_true, metrics, model
     else:

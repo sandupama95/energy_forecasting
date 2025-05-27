@@ -35,6 +35,13 @@ def train_and_predict_prophet(df: pd.DataFrame, forecast_horizon: int = 48, retu
     y_true = test["y"].values
 
     metrics = evaluate_forecast(y_true, y_pred)
+    # Save predictions
+    forecast_df = pd.DataFrame({
+        "timestamp": df["Date"].iloc[-forecast_horizon:],
+        "true_load": y_true,
+        "predicted_load": y_pred
+    })
+    forecast_df.to_csv("data/predictions/prophet_predictions.csv", index=False)
     if return_model:
         # Return the trained Prophet object as well
         return y_pred, y_true, metrics, model
