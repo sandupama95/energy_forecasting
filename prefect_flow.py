@@ -5,6 +5,7 @@ import mlflow
 from prefect import flow, task, get_run_logger
 import pandas as pd
 import pickle
+import torch
 
 from src.utils import load_config, init_logger
 from src.data_loader import load_raw_data
@@ -18,6 +19,7 @@ from src.evaluate import evaluate_forecast
 from src.prophet_model import train_and_predict_prophet
 from src.xgboost_model import train_and_predict_xgboost
 from src.lstm_model import train_and_predict_lstm
+from src.nbeats_model import train_and_predict_nbeats
 
 # Set MLflow tracking URI (you can customize or set via env var)
 # mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "sqlite:///mlruns.db"))
@@ -177,6 +179,18 @@ def train_and_evaluate(df: pd.DataFrame, forecast_horizon: int, chosen_models: l
             # Log Keras model to MLflow
             mlflow.keras.log_model(model_lstm, artifact_path="models/lstm")
             logger.info("LSTM model artifact logged to MLflow.")
+    
+    # N-BEATS section
+    if "nbeats" in chosen_models:
+        with mlflow.start_run(run_name="N-BEATS", nested=True):
+            y_pred, y_true, metrics, model_nbeat = train_and_predict_nbeats(df, forecast_horizon, return_model=True)
+            for k, v in metrics.items():
+                mlflow.log_metric(f"{k}", v)
+
+            # Save and log model manually (torch.save)
+            torch.save(model_nbeat.state_dict(), "nbeats_model.pth")
+            mlflow.log_artifact("nbeats_model.pth", artifact_path="models/nbeats")
+            # os.remove("nbeats_model.pth")
 
 @flow(log_prints=True)
 def energy_forecasting_flow(config_path: str = "configs/config.yaml"):

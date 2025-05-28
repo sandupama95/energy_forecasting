@@ -13,3 +13,4 @@ models:
   - prophet
   - xgboost
   - lstm
+  - nbeats
